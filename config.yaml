@@ -1,0 +1,41 @@
+name: Unet
+n_gpu: 1
+randomness:
+    torch_seed: 123 # default: null
+    numpy_seed: 123 # default: null
+    cudnn_deterministic: true # default: false
+arch:
+    type: SimpleUNetModel
+    args:
+        out_features: 1
+        dtype: float64
+data_loader:
+    type: NIRSpectraDataloader
+    args:
+        batch_size: 128
+        num_workers: 2
+        shuffle: true
+        validation_split: 0.1
+lr_scheduler:
+    type: CosineAnnealingLR
+    args:
+        T_max: 100
+        eta_min: 1e-08
+metrics:
+    - r2_score
+    - rmse_loss
+loss: mse_loss
+optimizer:
+    type: Adam
+    args:
+        amsgrad: true
+        lr: 0.001
+        weight_decay: 0
+trainer:
+    early_stop: 100
+    epochs: 10000
+    monitor: min val_loss
+    save_dir: saved/
+    save_period: 1
+    tensorboard: true
+    verbosity: 2

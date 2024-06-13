@@ -1,14 +1,16 @@
-import os
 import logging
-from pathlib import Path
-from functools import reduce, partial
-from operator import getitem
+import os
+from collections.abc import Mapping
 from datetime import datetime
+from functools import partial, reduce
+from operator import getitem
+from pathlib import Path
+
 from logger import setup_logging
 from utils import read_json, write_json
 
 
-class ConfigParser:
+class ConfigParser(Mapping):
     def __init__(self, config, resume=None, modification=None, run_id=None):
         """
         class to parse configuration json file. Handles hyperparameters for training, initializations of modules, checkpoint saving
@@ -110,6 +112,12 @@ class ConfigParser:
     def __getitem__(self, name):
         """Access items like ordinary dict."""
         return self.config[name]
+    
+    def __iter__(self):
+        return iter(self.config)
+    
+    def __len__(self):
+        return len(self.config)
 
     def get_logger(self, name, verbosity=2):
         msg_verbosity = 'verbosity option {} is invalid. Valid options are {}.'.format(verbosity, self.log_levels.keys())

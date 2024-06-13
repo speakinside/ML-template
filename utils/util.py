@@ -1,15 +1,54 @@
 import json
-import torch
-import pandas as pd
-from pathlib import Path
-from itertools import repeat
 from collections import OrderedDict
+from itertools import repeat
+from pathlib import Path
 
+import pandas as pd
+import torch
+
+try:
+    from ruamel.yaml import YAML
+    yaml = YAML()
+    yaml.indent(4, offset=4)
+except ImportError:
+    pass
+
+FILE_TYPE = 'yaml'
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
     if not dirname.is_dir():
         dirname.mkdir(parents=True, exist_ok=False)
+
+def read_yaml(fname):
+    global yaml
+    fname = Path(fname)
+    return yaml.load(fname)
+
+def write_yaml(content, fname):
+    global yaml
+    fname = Path(fname)
+    with fname.open('wt') as handle:
+        yaml.dump(content, handle)
+
+def read_config(fname):
+    global FILE_TYPE
+    fname = Path(fname)
+    if fname.suffix.lower().endswith('json'):
+        FILE_TYPE = 'json'
+        return read_json(fname)
+    elif fname.suffix.lower().endswith('yaml'):
+        FILE_TYPE = 'yaml'
+        return read_yaml(fname)
+    else:
+        raise ValueError("Unrecognized file type.")
+
+def write_config(fname):
+    fname = Path(fname)
+    if FILE_TYPE == 'json':
+        write_json(fname)
+    elif FILE_TYPE == 'yaml':
+        write_yaml(fname)
 
 def read_json(fname):
     fname = Path(fname)
@@ -56,9 +95,9 @@ class MetricTracker:
     def update(self, key, value, n=1):
         if self.writer is not None:
             self.writer.add_scalar(key, value)
-        self._data.total[key] += value * n
-        self._data.counts[key] += n
-        self._data.average[key] = self._data.total[key] / self._data.counts[key]
+        self._data.loc[key, 'total'] += value * n
+        self._data.loc[key, 'counts'] += n
+        self._data.loc[key, 'average'] = self._data.loc[key, 'total'] / self._data.loc[key, 'counts']
 
     def avg(self, key):
         return self._data.average[key]

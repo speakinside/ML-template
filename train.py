@@ -12,14 +12,26 @@ from utils import prepare_device
 
 
 # fix random seeds for reproducibility
-SEED = 123
-torch.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-np.random.seed(SEED)
+def set_randomness(config: ConfigParser):
+    try:
+        randomness:dict = config['randomness']
+    except KeyError:
+        return
+    else:
+        if seed := randomness.get("torch_seed", False):
+            torch.manual_seed(seed)
+        if seed := randomness.get("numpy_seed", False):
+            np.random.seed(seed)
+        if randomness.get("cudnn_deterministic", False):
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+        
 
-def main(config):
+def main(config: ConfigParser):
     logger = config.get_logger('train')
+
+    # setup randomness
+    set_randomness(config)
 
     # setup data_loader instances
     data_loader = config.init_obj('data_loader', module_data)
