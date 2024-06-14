@@ -1,6 +1,6 @@
 import logging
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import datetime
 from functools import partial, reduce
 from operator import getitem
@@ -88,11 +88,21 @@ class ConfigParser(Mapping):
         is equivalent to
         `object = module.name(a, b=1)`
         """
-        module_name = self[name]['type']
-        module_args = dict(self[name]['args'])
-        assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
-        module_args.update(kwargs)
-        return getattr(module, module_name)(*args, **module_args)
+        
+        def _init_an_obj(_conf):
+            nonlocal module, args, kwargs
+            module_name = _conf['type']
+            module_args = dict(_conf['args'])
+            assert all([k not in module_args for k in kwargs]), 'Overwriting kwargs given in config file is not allowed'
+            module_args.update(kwargs)
+            return getattr(module, module_name)(*args, **module_args)
+        
+        conf = self[name]
+        if isinstance(conf, Sequence):
+            return [_init_an_obj(c) for c in conf]
+        else:
+            return _init_an_obj(conf)
+        
 
     def init_ftn(self, name, module, *args, **kwargs):
         """
