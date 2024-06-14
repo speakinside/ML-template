@@ -9,7 +9,6 @@ import torch
 try:
     from ruamel.yaml import YAML
     yaml = YAML()
-    yaml.indent(4, offset=4)
 except ImportError:
     pass
 
